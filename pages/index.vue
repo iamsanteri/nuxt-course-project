@@ -4,7 +4,7 @@
       <h1>Get the latest tech news!</h1>
     </section>
     <section class="featured-posts">
-      <postList />
+      <postList :posts="loadedPosts" />
     </section>
   </div>
 </template>
@@ -15,6 +15,25 @@ import PostList from "@/components/posts/PostList"
 export default {
   components: {
     PostList
+  },
+  // asyncData can only be used within Pages directory in Nuxt
+  asyncData(context, callback) {
+    setTimeout(() => {
+      callback(null, {
+        loadedPosts: [
+        { id: "1", title: "First post", previewText: "This is our first post", thumbnail: "-"},
+        { id: "2", title: "Second post", previewText: "This is our second post", thumbnail: "-"}
+      ]
+      })
+    }, 1000)
+  },
+  // When using asyncData, be careful with standard data overwriting things on the client side
+  // data() {
+  //  return {
+  //    loadedPosts: []
+  //  }
+  //},
+  created() {
   }
 }
 </script>

@@ -1,8 +1,13 @@
 <template>
     <section class="post-list">
-        <PostPreview :is-admin="isAdmin" id="1" thumbnail="-" title="Hello there!" previewText="This is a preview text." />
-        <PostPreview :is-admin="isAdmin" id="2" thumbnail="-" title="Hello there! 2" previewText="This is a preview text. 2" />
-        <PostPreview :is-admin="isAdmin" id="3" thumbnail="-" title="Hello there! 3" previewText="This is a preview text. 3" />
+        <PostPreview 
+        v-for="post in posts" 
+        :key="post.id" 
+        :is-admin="isAdmin" 
+        :id="post.id" 
+        :thumbnail="post.thumbnail" 
+        :title="post.title" 
+        :previewText="post.previewText" />
     </section>
 </template>
 
@@ -15,8 +20,12 @@ export default {
   },
   props: {
       isAdmin: {
-          type: Boolean, 
-          default: false
+        type: Boolean, 
+        default: false
+      },
+      posts: {
+        type: Array,
+        required: true
       }
   }
 }
