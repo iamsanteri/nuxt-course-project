@@ -11,16 +11,10 @@ export default {
   components: {
     PostList
   },
-  data() {
-    return {
-      loadedPosts: [
-        { id: "1", title: "First post", previewText: "This is our first post", thumbnail: "-"},
-        { id: "2", title: "Second post", previewText: "This is our second post", thumbnail: "-"}
-      ]
+  computed: {
+    loadedPosts() {
+      return this.$store.getters.loadedPosts
     }
-  },
-  created() {
-    this.$store.dispatch("setPosts", this.loadedPosts);
   }
 }
 </script>
