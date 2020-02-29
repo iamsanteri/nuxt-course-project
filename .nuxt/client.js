@@ -60,9 +60,6 @@ Vue.config.errorHandler = function (err, vm, info) {
 createApp()
 .then(mountApp)
 .catch(err => {
-  if (err.message === 'ERR_REDIRECT') {
-    return // Wait for browser to redirect...
-  }
   console.error('[nuxt] Error while initializing app', err)
 })
 
@@ -204,8 +201,7 @@ async function render (to, from, next) {
     if (from.path !== path.path && this.$loading.pause) this.$loading.pause()
     if (nextCalled) return
     nextCalled = true
-    const matches = []
-    _lastPaths = getMatchedComponents(from, matches).map((Component, i) => compile(from.matched[matches[i]].path)(from.params))
+    _lastPaths = getMatchedComponents(from).map((Component, i) => compile(from.matched[i].path)(from.params))
     next(path)
   }
 
@@ -219,18 +215,17 @@ async function render (to, from, next) {
   this._hadError = !!app.nuxt.err
 
   // Get route's matched components
-  const matches = []
-  const Components = getMatchedComponents(to, matches)
+  const Components = getMatchedComponents(to)
 
   // If no Components matched, generate 404
   if (!Components.length) {
     // Default layout
     await callMiddleware.call(this, Components, app.context)
-    if (nextCalled) return
+    if (app.context._redirected) return
     // Load layout for error page
     const layout = await this.loadLayout(typeof NuxtError.layout === 'function' ? NuxtError.layout(app.context) : NuxtError.layout)
     await callMiddleware.call(this, Components, app.context, layout)
-    if (nextCalled) return
+    if (app.context._redirected) return
     // Show error page
     app.context.error({ statusCode: 404, message: 'This page could not be found' })
     return next()
@@ -250,7 +245,7 @@ async function render (to, from, next) {
   try {
     // Call middleware
     await callMiddleware.call(this, Components, app.context)
-    if (nextCalled) return
+    if (app.context._redirected) return
     if (app.context._errored) return next()
 
     // Set layout
@@ -262,7 +257,7 @@ async function render (to, from, next) {
 
     // Call middleware for layout
     await callMiddleware.call(this, Components, app.context, layout)
-    if (nextCalled) return
+    if (app.context._redirected) return
     if (app.context._errored) return next()
 
     // Call .validate()
@@ -285,7 +280,7 @@ async function render (to, from, next) {
     // Call asyncData & fetch hooks on components matched by the route.
     await Promise.all(Components.map((Component, i) => {
       // Check if only children route changed
-      Component._path = compile(to.matched[matches[i]].path)(to.params)
+      Component._path = compile(to.matched[i].path)(to.params)
       Component._dataRefresh = false
       // Check if Component need to be refreshed (call asyncData & fetch)
       // Only if its slug has changed or is watch query changes
@@ -337,7 +332,7 @@ async function render (to, from, next) {
     // If not redirected
     if (!nextCalled) {
       if(this.$loading.finish) this.$loading.finish()
-      _lastPaths = Components.map((Component, i) => compile(to.matched[matches[i]].path)(to.params))
+      _lastPaths = Components.map((Component, i) => compile(to.matched[i].path)(to.params))
       next()
     }
 
@@ -392,12 +387,11 @@ function fixPrepatch(to, ___) {
   if (this._pathChanged === false && this._queryChanged === false) return
 
   Vue.nextTick(() => {
-    const matches = []
-    const instances = getMatchedComponentsInstances(to, matches)
+    const instances = getMatchedComponentsInstances(to)
 
     instances.forEach((instance, i) => {
       if (!instance) return
-      // if (!this._queryChanged && to.matched[matches[i]].path.indexOf(':') === -1 && to.matched[matches[i]].path.indexOf('*') === -1) return // If not a dynamic route, skip
+      if (to.matched[i].path.indexOf(':') === -1) return // If not a dyanmic route, skip
       if (instance.constructor._dataRefresh && _lastPaths[i] === instance.constructor._path && typeof instance.constructor.options.data === 'function') {
         const newData = instance.constructor.options.data.call(instance)
         for (let key in newData) {

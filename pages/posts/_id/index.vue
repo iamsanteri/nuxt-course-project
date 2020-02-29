@@ -15,26 +15,22 @@
 </template>
 
 <script>
+import axios from "axios"
+
 export default {
   // Just like fetch, only available on page components in Nuxt. Loaded once on the server side and after that in the client.
   // Should be either a Promise or a Callback. 
   // It's powerful for getting page specific data. 
   // Fetch unlike asyncData does not set the data, for example instead loading it into the store. 
   // Use NuxtServerInit action in the Vuex store if you want to initialize the store with some bigger chunk of data instead of constant re-fetching
-  asyncData(context, callback) {
-    setTimeout(() => {
-      callback(null, {
-        loadedPost: {
-          id: "1", 
-          title: "First post (ID: " + context.params.id + ")", 
-          previewText: "This is our first post", 
-          author: "Santeri", 
-          updatedDate: new Date(), 
-          thumbnail: "-", 
-          content: "This is the main content of course!"
+  asyncData(context) {
+    return axios.get("https://nuxt-course-project-14241.firebaseio.com/posts/" + context.params.id + ".json")
+      .then(res => {
+        return {
+          loadedPost: res.data
         }
-      });
-    }, 1000)
+      })
+      .catch(e => context.error(e))
   }
 }
 </script>
