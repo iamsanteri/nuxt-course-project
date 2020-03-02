@@ -18,18 +18,17 @@ export default {
         return axios.get("https://nuxt-course-project-14241.firebaseio.com/posts/" + context.params.postId + ".json")
             .then(res => {
                 return {
-                    loadedPost: res.data
+                    loadedPost: {...res.data, id: context.params.postId}
                 }
             })
             .catch(e => context.error(e))
     },
     methods: {
         onSubmitted(editedPost) {
-            axios.put("https://nuxt-course-project-14241.firebaseio.com/posts/" + this.$route.params.postId + ".json", editedPost)
-                .then( res => {
+            this.$store.dispatch("editPost", editedPost)
+                .then(() => {
                     this.$router.push("/admin")
-                })
-                .catch(e => console.log(e))
+                });
         }
     }
 }
